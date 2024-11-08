@@ -70,12 +70,16 @@ class Dock extends StatefulWidget {
   DockState createState() => DockState();
 }
 
+
+
+
+
 class DockState extends State<Dock> {
   late List<IconData> _items;
   late List<Offset> _itemPositions;
   Offset? _draggingPosition;
   int? _draggingIndex;
-  final List<Offset> _dockPositions = [
+  List<Offset> _dockPositions = [
     const Offset(0, 100),
     const Offset(75, 100),
     const Offset(150, 100),
@@ -109,7 +113,7 @@ class DockState extends State<Dock> {
             _items.length,
             (index) {
               return AnimatedPositioned(
-                duration: const Duration(milliseconds: 3000),
+                duration: const Duration(milliseconds: 300),
                 left: _itemPositions[index].dx,
                 top: _itemPositions[index].dy,
                 child: GestureDetector(
@@ -172,61 +176,51 @@ class DockState extends State<Dock> {
   }
 
   int _getClosestDockPosition(Offset position) {
-  double minDistance = double.infinity;
-  int closestIndex = 0;
+    double minDistance = double.infinity;
+    int closestIndex = 0;
 
-  for (int i = 0; i < _dockPositions.length; i++) {
-    double distance = (position.dx - _dockPositions[i].dx).abs() +
-        (position.dy - _dockPositions[i].dy).abs();
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestIndex = i;
-    }
-  }
-
-  return closestIndex;
-}
-
-void _shiftIcons() {
-  // Create a new list of positions based on the current item positions
-  final newPositions = List<Offset>.from(_itemPositions);
-
-  // If there's a valid dragging index and dragging position
-  if (_draggingIndex != null && _draggingPosition != null) {
-    final newIndex = _getClosestDockPosition(_draggingPosition!);
-
-    // Check if the dragged icon has moved to a different position
-    if (newIndex != _draggingIndex) {
-      // Create space by shifting icons to the left or right
-      if (newIndex > _draggingIndex!) {
-        // Shift the icons after the dragged icon to the left (preserve the y-coordinate as 100)
-        for (int i = _draggingIndex! + 1; i <= newIndex; i++) {
-          newPositions[i] = Offset(
-            _dockPositions[i - 1].dx, // Shift left, preserve the y-coordinate (set y to 100)
-            100, // Set y to 100
-          );
-        }
-      } else {
-        // Shift the icons before the dragged icon to the right (preserve the y-coordinate as 100)
-        for (int i = _draggingIndex! - 1; i >= newIndex; i--) {
-          newPositions[i] = Offset(
-            _dockPositions[i + 1].dx, // Shift right, preserve the y-coordinate (set y to 100)
-            100, // Set y to 100
-          );
-        }
+    for (int i = 0; i < _dockPositions.length; i++) {
+      double distance = (position.dx - _dockPositions[i].dx).abs() +
+          (position.dy - _dockPositions[i].dy).abs();
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = i;
       }
-      // Place the dragged icon at its new position, preserving y-coordinate (set y to 100)
-      newPositions[newIndex] = Offset(
-        _draggingPosition!.dx, // Use the dragged icon's x position
-        100, // Set y to 100
-      );
     }
+
+    return closestIndex;
   }
 
-  // Update the item positions list to reflect the changes
-  setState(() {
-    _itemPositions = newPositions;
-  });
-}
+  void _shiftIcons() {
+    // Step 1: Update the positions list to reflect the current state
+    final newPositions = List<Offset>.from(_dockPositions);
 
+    if (_draggingIndex != null && _draggingPosition != null) {
+      final newIndex = _getClosestDockPosition(_draggingPosition!);
+
+      if (newIndex != _draggingIndex) {
+        // Step 2: Shift icons accordingly based on the new index
+        if (newIndex > _draggingIndex!) {
+          // Shift the icons after the dragged icon to the left
+          for (int i = _draggingIndex! + 1; i <= newIndex; i++) {
+            newPositions[i] = Offset(newPositions[i - 1].dx + 75, 100); // Shift right
+          }
+        } else {
+          // Shift the icons before the dragged icon to the right
+          for (int i = _draggingIndex! - 1; i >= newIndex; i--) {
+            newPositions[i] = Offset(newPositions[i + 1].dx - 75, 100); // Shift left
+          }
+        }
+
+        // Step 3: Place the dragged icon at its new position (keeping y fixed)
+        newPositions[newIndex] = Offset(_draggingPosition!.dx, 100);
+      }
+
+      // Update the _dockPositions list
+      setState(() {
+        _dockPositions = newPositions;
+        _itemPositions = newPositions;
+      });
+    }
+  }
 }
