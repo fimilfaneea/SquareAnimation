@@ -28,7 +28,7 @@ class HomePageState extends State<HomePage> {
     Icons.message,
     Icons.call,
     Icons.camera,
-    Icons.file_copy_sharp,
+  
   ];
 
   @override
@@ -70,36 +70,36 @@ class Dock extends StatefulWidget {
   DockState createState() => DockState();
 }
 
+
+
+
+
+
+
 class DockState extends State<Dock> {
   late List<IconData> _items;
-  late Map<String, List<Offset>> _itemPositionsMap;
+  late List<Offset> _itemPositions;
   Offset? _draggingPosition;
   int? _draggingIndex;
   final List<Offset> _dockPositions = [
-    const Offset(0, 100),
-    const Offset(75, 100),
-    const Offset(150, 100),
-    const Offset(225, 100),
-    const Offset(300, 100),
+    const Offset(0, 100), // Position for first "seat"
+    const Offset(75, 100), // Position for second "seat"
+    const Offset(150, 100), // Position for third "seat"
+    const Offset(225, 100), // Position for fourth "seat"
+    const Offset(300, 100), // Position for the new seat (fifth position)
   ];
 
   @override
   void initState() {
     super.initState();
     _items = [
-      Icons.abc,
-      Icons.book,
-      Icons.call,
-      Icons.delete,
-      Icons.egg,
+      Icons.access_alarm,
+      Icons.add_alert,
+      Icons.star,
+      Icons.home,
+      Icons.file_copy_sharp // New icon added
     ];
-    _itemPositionsMap = {
-      'a': [const Offset(0, 100)],
-      'b': [const Offset(75, 100)],
-      'c': [const Offset(150, 100)],
-      'd': [const Offset(225, 100)],
-      'e': [const Offset(300, 100)],
-    };
+    _itemPositions = List.generate(_items.length, (index) => _dockPositions[index % _dockPositions.length]);
   }
 
   @override
@@ -110,32 +110,44 @@ class DockState extends State<Dock> {
       padding: const EdgeInsets.all(8),
       child: Stack(
         children: [
+          // Render the icons with animation
           ...List.generate(
             _items.length,
             (index) {
               return AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                left: _itemPositionsMap.containsKey(_getItemKey(index))
-                    ? _itemPositionsMap[_getItemKey(index)]![0].dx
-                    : 0.0,
-                top: _itemPositionsMap.containsKey(_getItemKey(index))
-                    ? _itemPositionsMap[_getItemKey(index)]![0].dy
-                    : 100.0,
+                duration: Duration(milliseconds: 300), // Set the duration of the animation
+                left: _itemPositions[index].dx,
+                top: _itemPositions[index].dy,
                 child: GestureDetector(
                   onPanUpdate: (details) {
                     setState(() {
+                      // Set dragging index only when it's null
                       _draggingIndex ??= index;
+
+                      // Update position based on pan movement for dragging
                       _draggingPosition = details.localPosition;
                     });
                   },
                   onPanEnd: (_) {
                     setState(() {
                       if (_draggingPosition != null) {
-                        final newIndex =
-                            _getClosestDockPosition(_draggingPosition!);
+                        // Find the closest dock position for snapping
+                        final newIndex = _getClosestDockPosition(_draggingPosition!);
+
+                        // Rearrange the list of items based on the new position
                         final movedItem = _items.removeAt(_draggingIndex!);
                         _items.insert(newIndex, movedItem);
-                        _shiftIcons(newIndex);
+
+                        // Rearrange the positions based on the new item order
+                        _itemPositions = List.generate(
+                          _items.length,
+                          (index) => _dockPositions[index % _dockPositions.length],
+                        );
+
+                        // Shift the icons
+                        _shiftIcons();
+
+                        // Reset dragging state
                         _draggingPosition = null;
                         _draggingIndex = null;
                       }
@@ -149,27 +161,23 @@ class DockState extends State<Dock> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
-                      child: Icon(
-                        _items[index], // Use the _items list to get the icon
-                        color: Colors.white,
-                        size: 30, // Adjust size as needed
-                      ),
+                      child: Icon(_items[index], color: Colors.white),
                     ),
                   ),
                 ),
               );
             },
           ),
+          // Render the icon being dragged (if exists)
           if (_draggingPosition != null && _draggingIndex != null)
             Positioned(
-              left: _draggingPosition!.dx - 30,
+              left: _draggingPosition!.dx - 30, // Adjust to center the icon
               top: _draggingPosition!.dy - 30,
               child: Container(
                 height: 60,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: Colors
-                      .primaries[_draggingIndex! % Colors.primaries.length],
+                  color: Colors.primaries[_draggingIndex! % Colors.primaries.length],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
@@ -182,10 +190,7 @@ class DockState extends State<Dock> {
     );
   }
 
-  String _getItemKey(int index) {
-    return String.fromCharCode(97 + index);
-  }
-
+  // Function to find the closest dock position
   int _getClosestDockPosition(Offset position) {
     double minDistance = double.infinity;
     int closestIndex = 0;
@@ -202,21 +207,22 @@ class DockState extends State<Dock> {
     return closestIndex;
   }
 
-  void _shiftIcons(int newIndex) {
-    if (_draggingIndex != null && _draggingPosition != null) {
-      final oldIndex = _draggingIndex!;
-      final draggedKey = _getItemKey(oldIndex);
-
-      final keys = _itemPositionsMap.keys.toList();
-      keys.removeAt(oldIndex);
-      keys.insert(newIndex, draggedKey);
-
-      for (int i = 0; i < keys.length; i++) {
-        final key = keys[i];
-        _itemPositionsMap[key] = [Offset(i * 75.0, 100.0)];
+  // Function to shift icons when a new item is inserted
+  void _shiftIcons() {
+    // Create a new list of positions based on the new order
+    final newPositions = List.generate(_items.length, (index) {
+      if (index < _draggingIndex!) {
+        return _dockPositions[index]; // Icons before the dragged one
+      } else if (index > _draggingIndex!) {
+        return _dockPositions[index - 1]; // Icons after the dragged one shift left
+      } else {
+        return _dockPositions[index]; // Keep the dragged icon at its new position
       }
+    });
 
-      setState(() {});
-    }
+    // Update the positions list
+    setState(() {
+      _itemPositions = newPositions;
+    });
   }
 }
