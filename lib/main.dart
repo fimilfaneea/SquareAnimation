@@ -24,13 +24,68 @@ class RedSquare extends StatefulWidget {
   RedSquareState createState() => RedSquareState();
 }
 
-class RedSquareState extends State<RedSquare>
-    with SingleTickerProviderStateMixin {
+class RedSquareState extends State<RedSquare> with SingleTickerProviderStateMixin {
+  /// The current position of the red square on the x-axis.
   double? _position;
+
+  /// Indicates if the square is currently animating.
   bool _isAnimating = false;
+
+  /// Disables the button when the square is moving in one direction.
+  bool _isButtonDisabled = false;
+
+  /// The controller that drives the animation.
   late AnimationController _controller;
+
+  /// The animation that moves the square.
   late Animation<double> _animation;
 
+  @override
+  void initState() {
+    super.initState();
+
+    // Initializes the animation controller with a duration and vsync.
+    _controller = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+
+    // Updates the position of the square as the animation progresses.
+    _controller.addListener(() {
+      setState(() {
+        _position = _animation.value;
+      });
+    });
+
+    // Listens for changes in the animation status.
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.forward) {
+        // Indicates that the animation is in progress.
+        if (mounted) {
+          setState(() {
+            _isAnimating = true;
+          });
+        }
+      }
+
+      // Resets the animation status when completed or dismissed.
+      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+        if (_isAnimating) {
+          if (mounted) {
+            setState(() {
+              _isAnimating = false;
+            });
+          }
+        }
+      }
+    });
+  }
+
+  /// Moves the red square to the right edge of the screen.
+  ///  
+  /// Parameters:
+  /// - [screenWidth]: The width of the screen.
+  /// - [squareSize]: The size of the red square.
   void _moveRight(double screenWidth, double squareSize) {
     if (_isAnimating) return;
     setState(() {
@@ -38,72 +93,33 @@ class RedSquareState extends State<RedSquare>
     });
 
     double endPosition = screenWidth - squareSize;
-
-    _animation = Tween<double>(begin: _position ?? 0, end: endPosition)
-        .animate(_controller);
-
+    _animation = Tween<double>(begin: _position ?? 0, end: endPosition).animate(_controller);
     _controller.forward(from: 0.0);
   }
 
+  /// Moves the red square to the left edge of the screen and disables the button temporarily.
+  /// 
+  /// Parameters:
+  /// - [screenWidth]: The width of the screen.
+  /// - [squareSize]: The size of the red square.
   void _moveLeft(double screenWidth, double squareSize) {
     if (_isAnimating) return;
     setState(() {
       _isAnimating = true;
+      _isButtonDisabled = true;
     });
 
     double endPosition = -screenWidth + squareSize;
-
-    _animation = Tween<double>(begin: _position ?? 0, end: endPosition)
-        .animate(_controller);
-
+    _animation = Tween<double>(begin: _position ?? 0, end: endPosition).animate(_controller);
     _controller.forward(from: 0.0);
-  }
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 1),
-      vsync: this,
-    );
-
-    _controller.addListener(() {
-      setState(() {
-        _position = _animation.value;
-      });
-    });
-
-    _controller.addStatusListener((status) {
-      print("Animation Status: $status"); // Print the current status
-
-      if (status == AnimationStatus.completed ||
-          status == AnimationStatus.dismissed) {
-        print(
-            "Animation completed or dismissed."); // Print when the animation finishes
-
-        if (_isAnimating) {
-          print(
-              "Animation was in progress, setting _isAnimating to false."); // Print before setting the flag
-
-          if (mounted) {
-            setState(() {
-              _isAnimating = false; // Set the flag to false
-            });
-          }
-
-          print(
-              "State updated, _isAnimating is now: $_isAnimating"); // Print after setting the flag
-        } else {
-          print(
-              "Animation was not in progress, no need to set _isAnimating."); // If animation is not running
-        }
+    // Enables the button after the animation completes.
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isButtonDisabled = false;
+        });
       }
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _position = 0.0;
-      });
     });
   }
 
@@ -115,8 +131,14 @@ class RedSquareState extends State<RedSquare>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Transform.translate(
-          offset: Offset(_position ?? 0, 0),
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(_position ?? 0, 0),
+              child: child,
+            );
+          },
           child: Container(
             width: squareSize,
             height: squareSize,
@@ -124,11 +146,12 @@ class RedSquareState extends State<RedSquare>
           ),
         ),
         const SizedBox(height: 50),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: !_isAnimating && (_position ?? 0) >= 0
+              onPressed: !_isAnimating && (_position ?? 0) >= 0 && !_isButtonDisabled
                   ? () {
                       _moveLeft(screenWidth, squareSize);
                     }
@@ -137,7 +160,7 @@ class RedSquareState extends State<RedSquare>
             ),
             const SizedBox(width: 20),
             ElevatedButton(
-              onPressed: !_isAnimating && (_position ?? 0) <= 0
+              onPressed: !_isAnimating && (_position ?? 0) <= 0 && !_isButtonDisabled
                   ? () {
                       _moveRight(screenWidth, squareSize);
                     }
@@ -152,8 +175,7 @@ class RedSquareState extends State<RedSquare>
 
   @override
   void dispose() {
-    _controller.removeListener(() {});
-
+    // Disposes of the animation controller to free resources.
     _controller.dispose();
     super.dispose();
   }
