@@ -29,6 +29,8 @@ class RedSquareState extends State<RedSquare>
   double? _position;
   bool _isAnimating = false;
   late AnimationController _controller;
+  bool _isButtonDisabled = false;
+
   late Animation<double> _animation;
 
   void _moveRight(double screenWidth, double squareSize) {
@@ -38,6 +40,14 @@ class RedSquareState extends State<RedSquare>
     });
 
     double endPosition = screenWidth - squareSize;
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _isButtonDisabled = false;
+        });
+      }
+    });
 
     _animation = Tween<double>(begin: _position ?? 0, end: endPosition)
         .animate(_controller);
@@ -74,29 +84,17 @@ class RedSquareState extends State<RedSquare>
     });
 
     _controller.addStatusListener((status) {
-      print("Animation Status: $status"); // Print the current status
-
       if (status == AnimationStatus.completed ||
           status == AnimationStatus.dismissed) {
-        print(
-            "Animation completed or dismissed."); // Print when the animation finishes
-
         if (_isAnimating) {
-          print(
-              "Animation was in progress, setting _isAnimating to false."); // Print before setting the flag
-
           if (mounted) {
             setState(() {
               _isAnimating = false; // Set the flag to false
             });
           }
 
-          print(
-              "State updated, _isAnimating is now: $_isAnimating"); // Print after setting the flag
-        } else {
-          print(
-              "Animation was not in progress, no need to set _isAnimating."); // If animation is not running
-        }
+          // Print after setting the flag
+        } else {}
       }
     });
 
@@ -128,20 +126,22 @@ class RedSquareState extends State<RedSquare>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: !_isAnimating && (_position ?? 0) >= 0
-                  ? () {
-                      _moveLeft(screenWidth, squareSize);
-                    }
-                  : null,
+              onPressed:
+                  !_isAnimating && (_position ?? 0) >= 0 && !_isButtonDisabled
+                      ? () {
+                          _moveLeft(screenWidth, squareSize);
+                        }
+                      : null,
               child: const Text('To Left'),
             ),
             const SizedBox(width: 20),
             ElevatedButton(
-              onPressed: !_isAnimating && (_position ?? 0) <= 0
-                  ? () {
-                      _moveRight(screenWidth, squareSize);
-                    }
-                  : null,
+              onPressed:
+                  !_isAnimating && (_position ?? 0) <= 0 && !_isButtonDisabled
+                      ? () {
+                          _moveRight(screenWidth, squareSize);
+                        }
+                      : null,
               child: const Text('To Right'),
             ),
           ],
