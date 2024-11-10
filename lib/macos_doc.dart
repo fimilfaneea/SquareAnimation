@@ -23,24 +23,25 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
   double getTranslationY(int index) {
     return baseTranslationY;
   }
-
-  double getIconPosition(int index) {
-    if (draggedItem != null && hoveredIndex != null) {
-      print('Dragged item: $draggedItem');
-      print('Hovered index: $hoveredIndex');
-      print('Current index: $index');
-      
-      if (index > hoveredIndex!) {
-        print('Moving icon to the left (index > hoveredIndex)');
-        return -50.0; // Slide icons to the left
-      } else if (index < hoveredIndex!) {
-        print('Moving icon to the right (index < hoveredIndex)');
-        return 50.0; // Slide icons to the right
-      }
+// Update the getIconPosition to return a smooth transition value (animated over time).
+double getIconPosition(int index) {
+  if (draggedItem != null && hoveredIndex != null) {
+    print('Dragged item: $draggedItem');
+    print('Hovered index: $hoveredIndex');
+    print('Current index: $index');
+    
+    if (index > hoveredIndex!) {
+      print('Moving icon to the left (index > hoveredIndex)');
+      return -50.0; // Slide icons to the left
+    } else if (index < hoveredIndex!) {
+      print('Moving icon to the right (index < hoveredIndex)');
+      return 50.0; // Slide icons to the right
     }
-    print('No shift for icon at index $index');
-    return 0.0; // No shift when not dragging or hoveredIndex is null
   }
+  print('No shift for icon at index $index');
+  return 0.0; // No shift when not dragging or hoveredIndex is null
+}
+
 
   double getDockWidth() {
     double baseDockWidth = baseItemHeight * items.length +
@@ -86,7 +87,8 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
             Padding(
               padding: EdgeInsets.symmetric(vertical: verticalItemsPadding),
               child: SizedBox(
-                width: getDockWidth(), // Use getDockWidth here to set dynamic width
+                width:
+                    getDockWidth(), // Use getDockWidth here to set dynamic width
                 child: Row(
                   mainAxisAlignment:
                       MainAxisAlignment.center, // Always center the icons
@@ -119,50 +121,59 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
                                     hoveredIndex = null;
                                   });
                                 },
-                                child: Draggable<String>( 
-                                  data: items[index],
-                                  onDragStarted: () {
-                                    setState(() {
-                                      draggedItem = items[index];
-                                    });
-                                  },
-                                  onDraggableCanceled: (velocity, offset) {
-                                    setState(() {
-                                      draggedItem = null;
-                                    });
-                                  },
-                                  childWhenDragging: SizedBox(
-                                    height: getScaledSize(index),
-                                    width: getScaledSize(index),
-                                  ),
-                                  feedback: Material(
-                                    color: Colors.transparent,
-                                    child: Container(
-                                      width: 80,
-                                      height: 80,
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        items[index],
-                                        style: const TextStyle(fontSize: 40),
-                                      ),
+                                child: Draggable<String>(
+                                    data: items[index],
+                                    onDragStarted: () {
+                                      setState(() {
+                                        draggedItem = items[index];
+                                      });
+                                    },
+                                    onDraggableCanceled: (velocity, offset) {
+                                      setState(() {
+                                        draggedItem = null;
+                                      });
+                                    },
+                                    childWhenDragging: SizedBox(
+                                      height: getScaledSize(index),
+                                      width: getScaledSize(index),
                                     ),
-                                  ),
-                                  child: Transform.translate(
-                                    offset: Offset(
-                                      getIconPosition(index),  // Apply the position change
-                                      getTranslationY(index),
-                                    ),
-                                    child: FittedBox(
-                                      fit: BoxFit.contain,
-                                      child: Text(
-                                        items[index],
-                                        style: TextStyle(
-                                          fontSize: getScaledSize(index),
+                                    feedback: Material(
+                                      color: Colors.transparent,
+                                      child: Container(
+                                        width: 80,
+                                        height: 80,
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          items[index],
+                                          style: const TextStyle(fontSize: 40),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ),
+                                    child: AnimatedPositioned(
+                                      duration: const Duration(
+                                          seconds:
+                                              5), // Set the animation duration
+                                      left: getIconPosition(
+                                          index), // Horizontal position change
+                                      top: getTranslationY(
+                                          index), // Vertical position change (optional)
+                                      child: Transform.translate(
+                                        offset: Offset(
+                                          getIconPosition(
+                                              index), // Horizontal movement (adjust)
+                                          getTranslationY(
+                                              index), // Vertical movement (adjust)
+                                        ),
+                                        child: FittedBox(
+                                          fit: BoxFit.contain,
+                                          child: Text(
+                                            items[index],
+                                            style: TextStyle(
+                                                fontSize: getScaledSize(index)),
+                                          ),
+                                        ),
+                                      ),
+                                    )),
                               ),
                             );
                           },
