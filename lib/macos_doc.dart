@@ -17,70 +17,28 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
   String? draggedItem;
 
   double getScaledSize(int index) {
-    final size = getPropertyValue(
-      index: index,
-      baseValue: baseItemHeight,
-      maxValue: 140,
-      nonHoveredMaxValue: 100,
-    );
-    return size;
+    return baseItemHeight;
   }
 
   double getTranslationY(int index) {
-    final translation = getPropertyValue(
-      index: index,
-      baseValue: baseTranslationY,
-      maxValue: -44,
-      nonHoveredMaxValue: -28,
-    );
-    return translation;
-  }
-
-  double getPropertyValue({
-    required int index,
-    required double baseValue,
-    required double maxValue,
-    required double nonHoveredMaxValue,
-  }) {
-    late final double propertyValue;
-
-    if (hoveredIndex == null) {
-      return baseValue;
-    }
-
-    final difference = (hoveredIndex! - index).abs();
-    final itemsAffected = items.length;
-
-    if (difference == 0) {
-      propertyValue = maxValue;
-    } else if (difference <= itemsAffected) {
-      final ratio = (itemsAffected - difference) / itemsAffected;
-      propertyValue = lerpDouble(baseValue, nonHoveredMaxValue, ratio)!;
-    } else {
-      propertyValue = baseValue;
-    }
-
-    return propertyValue;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    hoveredIndex = null;
-    baseItemHeight = 80;
-    verticalItemsPadding = 20;
-    baseTranslationY = 0.0;
+    return baseTranslationY;
   }
 
   double getIconPosition(int index) {
-    // Check if the draggedItem is not null and hoveredIndex is valid
     if (draggedItem != null && hoveredIndex != null) {
+      print('Dragged item: $draggedItem');
+      print('Hovered index: $hoveredIndex');
+      print('Current index: $index');
+      
       if (index > hoveredIndex!) {
+        print('Moving icon to the left (index > hoveredIndex)');
         return -50.0; // Slide icons to the left
       } else if (index < hoveredIndex!) {
+        print('Moving icon to the right (index < hoveredIndex)');
         return 50.0; // Slide icons to the right
       }
     }
+    print('No shift for icon at index $index');
     return 0.0; // No shift when not dragging or hoveredIndex is null
   }
 
@@ -93,6 +51,15 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
     }
 
     return baseDockWidth;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    hoveredIndex = null;
+    baseItemHeight = 80;
+    verticalItemsPadding = 20;
+    baseTranslationY = 0.0;
   }
 
   @override
@@ -119,94 +86,87 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
             Padding(
               padding: EdgeInsets.symmetric(vertical: verticalItemsPadding),
               child: SizedBox(
-                width:
-                    getDockWidth(), // Use getDockWidth here to set dynamic width
+                width: getDockWidth(), // Use getDockWidth here to set dynamic width
                 child: Row(
                   mainAxisAlignment:
                       MainAxisAlignment.center, // Always center the icons
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(items.length, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10), // Spacing between icons
-                      child: DragTarget<String>(
-                        onAcceptWithDetails: (details) {
-                          setState(() {
-                            items.remove(draggedItem);
-                            items.insert(index, draggedItem!);
-                            draggedItem = null;
-                          });
-                        },
-                        builder: (context, candidateData, rejectedData) {
-                          return Opacity(
-                            opacity: candidateData.isNotEmpty ? 0.5 : 1.0,
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              onEnter: (event) {
-                                setState(() {
-                                  hoveredIndex = index;
-                                });
-                              },
-                              onExit: (event) {
-                                setState(() {
-                                  hoveredIndex = null;
-                                });
-                              },
-                              child: Draggable<String>(
-                                data: items[index],
-                                onDragStarted: () {
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10), // Spacing between icons
+                        child: DragTarget<String>(
+                          onAcceptWithDetails: (details) {
+                            setState(() {
+                              items.remove(draggedItem);
+                              items.insert(index, draggedItem!);
+                              draggedItem = null;
+                            });
+                          },
+                          builder: (context, candidateData, rejectedData) {
+                            return Opacity(
+                              opacity: candidateData.isNotEmpty ? 0.5 : 1.0,
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                onEnter: (event) {
                                   setState(() {
-                                    draggedItem = items[index];
+                                    hoveredIndex = index;
                                   });
                                 },
-                                onDraggableCanceled: (velocity, offset) {
+                                onExit: (event) {
                                   setState(() {
-                                    draggedItem = null;
+                                    hoveredIndex = null;
                                   });
                                 },
-                                childWhenDragging: SizedBox(
-                                  height: getScaledSize(index),
-                                  width: getScaledSize(index),
-                                ),
-                                feedback: Material(
-                                  color: Colors.transparent,
-                                  child: Container(
-                                    width: 80,
-                                    height: 80,
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      items[index],
-                                      style: const TextStyle(fontSize: 40),
+                                child: Draggable<String>( 
+                                  data: items[index],
+                                  onDragStarted: () {
+                                    setState(() {
+                                      draggedItem = items[index];
+                                    });
+                                  },
+                                  onDraggableCanceled: (velocity, offset) {
+                                    setState(() {
+                                      draggedItem = null;
+                                    });
+                                  },
+                                  childWhenDragging: SizedBox(
+                                    height: getScaledSize(index),
+                                    width: getScaledSize(index),
+                                  ),
+                                  feedback: Material(
+                                    color: Colors.transparent,
+                                    child: Container(
+                                      width: 80,
+                                      height: 80,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        items[index],
+                                        style: const TextStyle(fontSize: 40),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  transform: Matrix4.identity()
-                                    ..translate(
-                                      0.0,
+                                  child: Transform.translate(
+                                    offset: Offset(
+                                      getIconPosition(index),  // Apply the position change
                                       getTranslationY(index),
-                                      0.0,
                                     ),
-                                  height: getScaledSize(index),
-                                  width: getScaledSize(index),
-                                  alignment: AlignmentDirectional.bottomCenter,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10),
-                                  child: FittedBox(
-                                    fit: BoxFit.contain,
-                                    child: Text(
-                                      items[index],
-                                      style: TextStyle(
-                                        fontSize: getScaledSize(index),
+                                    child: FittedBox(
+                                      fit: BoxFit.contain,
+                                      child: Text(
+                                        items[index],
+                                        style: TextStyle(
+                                          fontSize: getScaledSize(index),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     );
                   }).toList(),
