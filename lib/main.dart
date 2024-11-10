@@ -206,6 +206,7 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
   }
 }
 
+
 /// List of items displayed in the dock as draggable icons.
 List<String> items = [
   '📱', 
