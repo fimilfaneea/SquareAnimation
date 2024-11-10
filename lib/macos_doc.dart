@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class MacOsInspiredDoc extends StatefulWidget {
@@ -16,23 +15,21 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
 
   String? draggedItem;
 
-  double getScaledSize(int index) {
-    return baseItemHeight;
-  }
-
   double getTranslationY(int index) {
     return baseTranslationY;
   }
 
   double getIconPosition(int index) {
     if (draggedItem != null && hoveredIndex != null) {
+      print("Fimil $draggedItem");
+      print("Fimil $hoveredIndex");
       if (index > hoveredIndex!) {
-        return -50.0; // Slide icons to the left
+        return -50.0;
       } else if (index < hoveredIndex!) {
-        return 50.0; // Slide icons to the right
+        return 50.0;
       }
     }
-    return 0.0; // No shift when not dragging or hoveredIndex is null
+    return 0.0;
   }
 
   double getDockWidth() {
@@ -78,7 +75,8 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
             ),
             Padding(
               padding: EdgeInsets.symmetric(vertical: verticalItemsPadding),
-              child: SizedBox(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
                 width: getDockWidth(),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -123,8 +121,8 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
                                     });
                                   },
                                   childWhenDragging: SizedBox(
-                                    height: getScaledSize(index),
-                                    width: getScaledSize(index),
+                                    height: baseItemHeight,
+                                    width: baseItemHeight,
                                   ),
                                   feedback: Material(
                                     color: Colors.transparent,
@@ -149,8 +147,8 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
                                       fit: BoxFit.contain,
                                       child: Text(
                                         items[index],
-                                        style: TextStyle(
-                                          fontSize: getScaledSize(index),
+                                        style: const TextStyle(
+                                          fontSize: 40,
                                         ),
                                       ),
                                     ),
