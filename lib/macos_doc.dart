@@ -1,25 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MacOsInspiredDoc(),
-    );
-  }
-}
-
 class MacOsInspiredDoc extends StatefulWidget {
   const MacOsInspiredDoc({super.key});
 
@@ -41,6 +21,8 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
 
   double getIconPosition(int index) {
     if (draggedItem != null && hoveredIndex != null) {
+      print("Fimil $draggedItem");
+      print("Fimil $hoveredIndex");
       if (index > hoveredIndex!) {
         return -50.0;
       } else if (index < hoveredIndex!) {
@@ -128,7 +110,6 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
                                     // Keep hoveredIndex unchanged, so the last hovered index stays
                                   },
                                   child: Draggable<String>(
-                                    // Draggable item
                                     data: items[index],
                                     onDragStarted: () {
                                       setState(() {
@@ -136,6 +117,7 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
                                       });
                                     },
                                     onDragUpdate: (details) {
+                                      // Update hoveredIndex based on drag position
                                       setState(() {
                                         final itemWidth =
                                             MediaQuery.of(context).size.width /
@@ -204,7 +186,7 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
 List<String> items = [
   '📱', // Mobile Phone
   '💻', // Laptop
-  '💾', // Disk
+  '💾',
   '🔋', // Battery
   '⚙️', // Gear (Settings)
 ];
