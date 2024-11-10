@@ -23,25 +23,17 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
   double getTranslationY(int index) {
     return baseTranslationY;
   }
-// Update the getIconPosition to return a smooth transition value (animated over time).
-double getIconPosition(int index) {
-  if (draggedItem != null && hoveredIndex != null) {
-    print('Dragged item: $draggedItem');
-    print('Hovered index: $hoveredIndex');
-    print('Current index: $index');
-    
-    if (index > hoveredIndex!) {
-      print('Moving icon to the left (index > hoveredIndex)');
-      return -50.0; // Slide icons to the left
-    } else if (index < hoveredIndex!) {
-      print('Moving icon to the right (index < hoveredIndex)');
-      return 50.0; // Slide icons to the right
-    }
-  }
-  print('No shift for icon at index $index');
-  return 0.0; // No shift when not dragging or hoveredIndex is null
-}
 
+  double getIconPosition(int index) {
+    if (draggedItem != null && hoveredIndex != null) {
+      if (index > hoveredIndex!) {
+        return -50.0; // Slide icons to the left
+      } else if (index < hoveredIndex!) {
+        return 50.0; // Slide icons to the right
+      }
+    }
+    return 0.0; // No shift when not dragging or hoveredIndex is null
+  }
 
   double getDockWidth() {
     double baseDockWidth = baseItemHeight * items.length +
@@ -87,17 +79,14 @@ double getIconPosition(int index) {
             Padding(
               padding: EdgeInsets.symmetric(vertical: verticalItemsPadding),
               child: SizedBox(
-                width:
-                    getDockWidth(), // Use getDockWidth here to set dynamic width
+                width: getDockWidth(),
                 child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center, // Always center the icons
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(items.length, (index) {
                     return Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10), // Spacing between icons
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: DragTarget<String>(
                           onAcceptWithDetails: (details) {
                             setState(() {
@@ -122,58 +111,51 @@ double getIconPosition(int index) {
                                   });
                                 },
                                 child: Draggable<String>(
-                                    data: items[index],
-                                    onDragStarted: () {
-                                      setState(() {
-                                        draggedItem = items[index];
-                                      });
-                                    },
-                                    onDraggableCanceled: (velocity, offset) {
-                                      setState(() {
-                                        draggedItem = null;
-                                      });
-                                    },
-                                    childWhenDragging: SizedBox(
-                                      height: getScaledSize(index),
-                                      width: getScaledSize(index),
+                                  data: items[index],
+                                  onDragStarted: () {
+                                    setState(() {
+                                      draggedItem = items[index];
+                                    });
+                                  },
+                                  onDraggableCanceled: (velocity, offset) {
+                                    setState(() {
+                                      draggedItem = null;
+                                    });
+                                  },
+                                  childWhenDragging: SizedBox(
+                                    height: getScaledSize(index),
+                                    width: getScaledSize(index),
+                                  ),
+                                  feedback: Material(
+                                    color: Colors.transparent,
+                                    child: Container(
+                                      width: 80,
+                                      height: 80,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        items[index],
+                                        style: const TextStyle(fontSize: 40),
+                                      ),
                                     ),
-                                    feedback: Material(
-                                      color: Colors.transparent,
-                                      child: Container(
-                                        width: 80,
-                                        height: 80,
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          items[index],
-                                          style: const TextStyle(fontSize: 40),
+                                  ),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(seconds: 1),
+                                    transform: Matrix4.translationValues(
+                                      getIconPosition(index),
+                                      getTranslationY(index),
+                                      0,
+                                    ),
+                                    child: FittedBox(
+                                      fit: BoxFit.contain,
+                                      child: Text(
+                                        items[index],
+                                        style: TextStyle(
+                                          fontSize: getScaledSize(index),
                                         ),
                                       ),
                                     ),
-                                    child: AnimatedPositioned(
-                                      duration: const Duration(
-                                          seconds:
-                                              5), // Set the animation duration
-                                      left: getIconPosition(
-                                          index), // Horizontal position change
-                                      top: getTranslationY(
-                                          index), // Vertical position change (optional)
-                                      child: Transform.translate(
-                                        offset: Offset(
-                                          getIconPosition(
-                                              index), // Horizontal movement (adjust)
-                                          getTranslationY(
-                                              index), // Vertical movement (adjust)
-                                        ),
-                                        child: FittedBox(
-                                          fit: BoxFit.contain,
-                                          child: Text(
-                                            items[index],
-                                            style: TextStyle(
-                                                fontSize: getScaledSize(index)),
-                                          ),
-                                        ),
-                                      ),
-                                    )),
+                                  ),
+                                ),
                               ),
                             );
                           },
@@ -191,7 +173,6 @@ double getIconPosition(int index) {
   }
 }
 
-// Icons list
 List<String> items = [
   '🌟',
   '😍',
