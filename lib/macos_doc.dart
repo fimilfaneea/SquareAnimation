@@ -72,16 +72,28 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
     baseTranslationY = 0.0;
   }
 
-  double getDockWidth() {
-  double baseDockWidth = baseItemHeight * items.length + verticalItemsPadding * (items.length +1);
-
-  if (draggedItem != null) {
-    baseDockWidth *= 0.8;  
+  double getIconPosition(int index) {
+    // Check if the draggedItem is not null and hoveredIndex is valid
+    if (draggedItem != null && hoveredIndex != null) {
+      if (index > hoveredIndex!) {
+        return -50.0; // Slide icons to the left
+      } else if (index < hoveredIndex!) {
+        return 50.0; // Slide icons to the right
+      }
+    }
+    return 0.0; // No shift when not dragging or hoveredIndex is null
   }
 
-  return baseDockWidth;
-}
+  double getDockWidth() {
+    double baseDockWidth = baseItemHeight * items.length +
+        verticalItemsPadding * (items.length + 1);
 
+    if (draggedItem != null) {
+      baseDockWidth *= 0.8;
+    }
+
+    return baseDockWidth;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,88 +120,94 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
               padding: EdgeInsets.symmetric(vertical: verticalItemsPadding),
               child: SizedBox(
                 width:
-                    getDockWidth(), 
+                    getDockWidth(), // Use getDockWidth here to set dynamic width
                 child: Row(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center, // Always center the icons
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(items.length, (index) {
-                    return DragTarget<String>(
-                      onAcceptWithDetails: (details) {
-                        setState(() {
-                          items.remove(draggedItem);
-                          items.insert(index, draggedItem!);
-                          draggedItem = null;
-                        });
-                      },
-                      builder: (context, candidateData, rejectedData) {
-                        return Opacity(
-                          opacity: candidateData.isNotEmpty ? 0.5 : 1.0,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            onEnter: (event) {
-                              setState(() {
-                                hoveredIndex = index;
-                              });
-                            },
-                            onExit: (event) {
-                              setState(() {
-                                hoveredIndex = null;
-                              });
-                            },
-                            child: Draggable<String>(
-                              data: items[index],
-                              onDragStarted: () {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10), // Spacing between icons
+                      child: DragTarget<String>(
+                        onAcceptWithDetails: (details) {
+                          setState(() {
+                            items.remove(draggedItem);
+                            items.insert(index, draggedItem!);
+                            draggedItem = null;
+                          });
+                        },
+                        builder: (context, candidateData, rejectedData) {
+                          return Opacity(
+                            opacity: candidateData.isNotEmpty ? 0.5 : 1.0,
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              onEnter: (event) {
                                 setState(() {
-                                  draggedItem = items[index];
+                                  hoveredIndex = index;
                                 });
                               },
-                              onDraggableCanceled: (velocity, offset) {
+                              onExit: (event) {
                                 setState(() {
-                                  draggedItem = null;
+                                  hoveredIndex = null;
                                 });
                               },
-                              childWhenDragging: SizedBox(
-                                height: getScaledSize(index),
-                                width: getScaledSize(index),
-                              ),
-                              feedback: Material(
-                                color: Colors.transparent,
-                                child: Container(
-                                  width: 80,
-                                  height: 80,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    items[index],
-                                    style: const TextStyle(fontSize: 40),
+                              child: Draggable<String>(
+                                data: items[index],
+                                onDragStarted: () {
+                                  setState(() {
+                                    draggedItem = items[index];
+                                  });
+                                },
+                                onDraggableCanceled: (velocity, offset) {
+                                  setState(() {
+                                    draggedItem = null;
+                                  });
+                                },
+                                childWhenDragging: SizedBox(
+                                  height: getScaledSize(index),
+                                  width: getScaledSize(index),
+                                ),
+                                feedback: Material(
+                                  color: Colors.transparent,
+                                  child: Container(
+                                    width: 80,
+                                    height: 80,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      items[index],
+                                      style: const TextStyle(fontSize: 40),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                transform: Matrix4.identity()
-                                  ..translate(
-                                    0.0,
-                                    getTranslationY(index),
-                                    0.0,
-                                  ),
-                                height: getScaledSize(index),
-                                width: getScaledSize(index),
-                                alignment: AlignmentDirectional.bottomCenter,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: FittedBox(
-                                  fit: BoxFit.contain,
-                                  child: Text(
-                                    items[index],
-                                    style: TextStyle(
-                                      fontSize: getScaledSize(index),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  transform: Matrix4.identity()
+                                    ..translate(
+                                      0.0,
+                                      getTranslationY(index),
+                                      0.0,
+                                    ),
+                                  height: getScaledSize(index),
+                                  width: getScaledSize(index),
+                                  alignment: AlignmentDirectional.bottomCenter,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: Text(
+                                      items[index],
+                                      style: TextStyle(
+                                        fontSize: getScaledSize(index),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     );
                   }).toList(),
                 ),
