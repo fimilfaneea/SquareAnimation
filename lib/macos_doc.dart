@@ -29,7 +29,7 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
         return 50.0;
       }
     }
-    return 0.0;
+    return 0.0; // Default position when draggedItem is not hovering or outside
   }
 
   double getDockWidth() {
@@ -95,67 +95,79 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
                           },
                           builder: (context, candidateData, rejectedData) {
                             return Opacity(
-                              opacity: candidateData.isNotEmpty ? 0.5 : 1.0,
-                              child: MouseRegion(
-                                cursor: SystemMouseCursors.click,
-                                onEnter: (event) {
-                                  setState(() {
-                                    hoveredIndex = index;
-                                  });
-                                },
-                                onExit: (event) {
-                                  setState(() {
-                                    hoveredIndex = null;
-                                  });
-                                },
-                                child: Draggable<String>(
-                                  data: items[index],
-                                  onDragStarted: () {
-                                    setState(() {
-                                      draggedItem = items[index];
-                                    });
+                                opacity: candidateData.isNotEmpty ? 0.5 : 1.0,
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  onEnter: (event) {
+                                    if (draggedItem != null) {
+                                      setState(() {
+                                        hoveredIndex =
+                                            index; // Update hoveredIndex only when an item is being dragged
+                                      });
+                                    }
                                   },
-                                  onDraggableCanceled: (velocity, offset) {
-                                    setState(() {
-                                      draggedItem = null;
-                                    });
+                                  onExit: (event) {
+                                    // Keep hoveredIndex unchanged, so the last hovered index stays
                                   },
-                                  childWhenDragging: SizedBox(
-                                    height: baseItemHeight,
-                                    width: baseItemHeight,
-                                  ),
-                                  feedback: Material(
-                                    color: Colors.transparent,
-                                    child: Container(
-                                      width: 80,
-                                      height: 80,
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        items[index],
-                                        style: const TextStyle(fontSize: 40),
+                                  child: Draggable<String>(
+                                    data: items[index],
+                                    onDragStarted: () {
+                                      setState(() {
+                                        draggedItem = items[index];
+                                      });
+                                    },
+                                    onDragUpdate: (details) {
+                                      // Update hoveredIndex based on drag position
+                                      setState(() {
+                                        final itemWidth =
+                                            MediaQuery.of(context).size.width /
+                                                items.length;
+                                        hoveredIndex =
+                                            (details.localPosition.dx /
+                                                    itemWidth)
+                                                .floor();
+                                      });
+                                    },
+                                    onDraggableCanceled: (velocity, offset) {
+                                      setState(() {
+                                        draggedItem = null;
+                                      });
+                                    },
+                                    childWhenDragging: SizedBox(
+                                      height: baseItemHeight,
+                                      width: baseItemHeight,
+                                    ),
+                                    feedback: Material(
+                                      color: Colors.transparent,
+                                      child: Container(
+                                        width: 80,
+                                        height: 80,
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          items[index],
+                                          style: const TextStyle(fontSize: 40),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(seconds: 1),
-                                    transform: Matrix4.translationValues(
-                                      getIconPosition(index),
-                                      getTranslationY(index),
-                                      0,
-                                    ),
-                                    child: FittedBox(
-                                      fit: BoxFit.contain,
-                                      child: Text(
-                                        items[index],
-                                        style: const TextStyle(
-                                          fontSize: 40,
+                                    child: AnimatedContainer(
+                                      duration: const Duration(seconds: 1),
+                                      transform: Matrix4.translationValues(
+                                        getIconPosition(index),
+                                        getTranslationY(index),
+                                        0,
+                                      ),
+                                      child: FittedBox(
+                                        fit: BoxFit.contain,
+                                        child: Text(
+                                          items[index],
+                                          style: const TextStyle(
+                                            fontSize: 40,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            );
+                                ));
                           },
                         ),
                       ),
@@ -172,9 +184,9 @@ class _MacOsInspiredDocState extends State<MacOsInspiredDoc> {
 }
 
 List<String> items = [
-  '🌟',
-  '😍',
-  '💙',
-  '👋',
-  '🙀',
+  '📱', // Mobile Phone
+  '💻', // Laptop
+  '💾',
+  '🔋', // Battery
+  '⚙️', // Gear (Settings)
 ];
